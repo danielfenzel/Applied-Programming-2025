@@ -28,7 +28,7 @@ For more details, visit the [official uv documentation](https://github.com/astra
 
 After installing uv, simply run:
 
-```
+```powershell
 uv sync
 ```
 
@@ -40,7 +40,7 @@ We will use Marimo, a reactive Python notebook, for some exercises. Marimo noteb
 
 To run the first exercise, navigate to the project's root directory in your terminal and execute:
 
-```bash
+```powershell
 uv run marimo run exercises/01/01_understand_git.py
 ```
 
