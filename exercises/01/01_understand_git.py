@@ -1,4 +1,4 @@
-# Copyright 2024 Marimo. All rights reserved.
+# Copyright 2025 n-squared LAB @ FAU Erlangen-Nürnberg
 
 import marimo
 
@@ -11,15 +11,19 @@ def _():
     import marimo as mo
 
     # Title Cell
-    mo.vstack([
-        mo.md("# A Visual Guide to Git for Beginners"),
-        mo.md("by Raul C. Sîmpetru @ [N² lab](https://www.nsquared.tf.fau.de/)").center(),
-        mo.md("""
+    mo.vstack(
+        [
+            mo.md("# A Visual Guide to Git for Beginners"),
+            mo.md(
+                "by Raul C. Sîmpetru @ [N² lab](https://www.nsquared.tf.fau.de/)"
+            ).center(),
+            mo.md("""
         Welcome! Git is a powerful tool for tracking changes in your projects (version control)
         and collaborating with others. It might seem complex at first, but understanding the
         core concepts visually can help a lot. Let's dive in!
-        """)
-    ])
+        """),
+        ]
+    )
     return (mo,)
 
 

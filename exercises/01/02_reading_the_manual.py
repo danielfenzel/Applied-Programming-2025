@@ -1,3 +1,5 @@
+# Copyright 2025 n-squared LAB @ FAU Erlangen-Nürnberg
+
 import marimo
 
 __generated_with = "0.12.4"
@@ -10,11 +12,14 @@ def _():
     import hashlib
     import os
 
-        # Title Cell
-    mo.vstack([
-        mo.md("# Finding and Reading Device Manuals"),
-        mo.md("by Raul C. Sîmpetru @ [N² lab](https://www.nsquared.tf.fau.de/)").center(),
-        mo.md("""
+    # Title Cell
+    mo.vstack(
+        [
+            mo.md("# Finding and Reading Device Manuals"),
+            mo.md(
+                "by Raul C. Sîmpetru @ [N² lab](https://www.nsquared.tf.fau.de/)"
+            ).center(),
+            mo.md("""
         Welcome! As an engineer or researcher, knowing how to find and extract information from 
         device manuals is a critical skill. In this exercise, you will:
 
@@ -24,15 +29,17 @@ def _():
 
         This helps develop your ability to navigate technical documentation and find important 
         specifications - essential skills for working with laboratory equipment.
-        """)
-    ])
+        """),
+        ]
+    )
     return hashlib, mo, os
 
 
 @app.cell
 def _(mo):
-    mo.vstack([
-        mo.md("""
+    mo.vstack(
+        [
+            mo.md("""
             ## OT Bioelettronica
 
             For this exercise, we'll be working with equipment from [OT Bioelettronica](https://otbioelettronica.it/), 
@@ -42,8 +49,11 @@ def _(mo):
             OT Bioelettronica produces various systems for recording and analyzing bioelectrical signals, 
             including multi-channel amplifiers, electrode arrays, and specialized software for signal processing.
             """),
-            mo.image("https://otbioelettronica.it/wp-content/uploads/2023/03/logo_white-2048x628.png", 
-                     width=300, style={"background-color": "#000000"}).center(),
+            mo.image(
+                "https://otbioelettronica.it/wp-content/uploads/2023/03/logo_white-2048x628.png",
+                width=300,
+                style={"background-color": "#000000"},
+            ).center(),
             mo.md("""
             ### Your Task
 
@@ -54,8 +64,9 @@ def _(mo):
             2. Navigate to find the user manual for the MuoviPro device
             3. Download the PDF manual
             4. Upload it below to verify you've found the correct document
-        """)
-    ])
+        """),
+        ]
+    )
     return
 
 
@@ -89,16 +100,18 @@ def _(hashlib, mo, upload):
             """)
         pass
 
-    mo.vstack([
-        mo.md("""
+    mo.vstack(
+        [
+            mo.md("""
             ## Upload the MuoviPro User Manual
 
             After downloading the manual from the manufacturer's website, upload it here to verify
             you've found the correct document.
         """),
-        upload,
-        result
-    ])
+            upload,
+            result,
+        ]
+    )
     return file_hash, result
 
 
@@ -107,33 +120,43 @@ def _(mo, result):
     # Only show this section if the correct manual was uploaded
     # Create form elements for student answers
     questions = {
-        "q1": mo.ui.text(label="What is the maximum sampling frequency of the MuoviPro device?"),
+        "q1": mo.ui.text(
+            label="What is the maximum sampling frequency of the MuoviPro device?"
+        ),
         "q2": mo.ui.text(label="How many input channels does the MuoviPro support?"),
         "q3": mo.ui.text(label="What is the input impedance of the device?"),
         "q4": mo.ui.text(label="What is the battery life when fully charged?"),
-        "q5": mo.ui.text(label="What wireless communication protocol does the device use?")
+        "q5": mo.ui.text(
+            label="What wireless communication protocol does the device use?"
+        ),
     }
 
     # Create a form layout using md.batch().form()
-    form = mo.md(
-        f"""
+    form = (
+        mo.md(
+            f"""
         1. {questions["q1"]}
         2. {questions["q2"]}
         3. {questions["q3"]}
         4. {questions["q4"]}
         5. {questions["q5"]}
         """
-    ).batch(
-        **questions
-    ).form()
+        )
+        .batch(**questions)
+        .form()
+    )
 
-    quiz_section = mo.vstack([
-        mo.md("### Device Specification Questions"),
-        mo.md("Answer the following questions based on information in the manual:"),
-        form
-    ])
+    quiz_section = mo.vstack(
+        [
+            mo.md("### Device Specification Questions"),
+            mo.md("Answer the following questions based on information in the manual:"),
+            form,
+        ]
+    )
 
-    what_to_display = mo.md("Complete the previous step by uploading the correct manual to proceed.")
+    what_to_display = mo.md(
+        "Complete the previous step by uploading the correct manual to proceed."
+    )
 
     if "Success" in result.text:
         manual_section = mo.md("""
@@ -154,11 +177,11 @@ def _(form, mo, questions):
     # Only evaluate if the form has been submitted
     # Updated with the correct information from the MuoviPro manual
     answers = {
-        "q1": "1",       # Maximum sampling frequency
-        "q2": "2",           # Number of input channels
-        "q3": "3",        # Input impedance
-        "q4": "4",      # Battery life
-        "q5": "5"     # Wireless protocol
+        "q1": "1",  # Maximum sampling frequency
+        "q2": "2",  # Number of input channels
+        "q3": "3",  # Input impedance
+        "q4": "4",  # Battery life
+        "q5": "5",  # Wireless protocol
     }
 
     # Check each answer
@@ -173,16 +196,22 @@ def _(form, mo, questions):
             results.append(f"✅ Question {q[-1]}: Correct!\n")
             score += 1
         else:
-            results.append(f"❌ Question {q[-1]}: Incorrect. The answer is: {answers[q]}\n")
+            results.append(
+                f"❌ Question {q[-1]}: Incorrect. The answer is: {answers[q]}\n"
+            )
 
-    answers_to_display = mo.md("Fill in your answers and click 'Check Answers' to evaluate your responses.")
+    answers_to_display = mo.md(
+        "Fill in your answers and click 'Check Answers' to evaluate your responses."
+    )
 
     if form.value:
         # Display results
-        answers_to_display = mo.vstack([
-            mo.md(f"### Your Score: {score}/{len(questions)}"),
-            mo.md("\n".join(results)),
-        ])
+        answers_to_display = mo.vstack(
+            [
+                mo.md(f"### Your Score: {score}/{len(questions)}"),
+                mo.md("\n".join(results)),
+            ]
+        )
 
     answers_to_display
     return (
@@ -201,7 +230,7 @@ def _(form, mo, questions):
 def _(mo, score):
     conclusion = mo.md("")
 
-    if score == 5: 
+    if score == 5:
         conclusion = mo.md("""
         ## Congratulations!
 
