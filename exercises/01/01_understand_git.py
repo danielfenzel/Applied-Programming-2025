@@ -10,7 +10,6 @@ app = marimo.App(width="medium", app_title="Exercise 01 / Understanding Git")
 def _():
     import marimo as mo
 
-    # Title Cell
     mo.vstack(
         [
             mo.md("# A Visual Guide to Git for Beginners"),
@@ -31,11 +30,11 @@ def _():
 def _(mo):
     # Section 1: What is a Repository and Commits?
     commit_diagram = """
-    flowchart LR
-       C1["Initial project setup"] --> C2["Add basic structure"]
-       C2 --> C3["Implement feature X"]
-       C3 --> C4["Fix typo in README"] 
-       C4 --> main["main"]
+    gitGraph
+       commit id: "C1"
+       commit id: "C2"
+       commit id: "C3"
+       commit id: "C4"
     """
 
     mo.vstack(
@@ -78,12 +77,15 @@ def _(mo):
 def _(mo):
     # Section 2: Branching
     branch_diagram = """
-    flowchart LR
-       C1["Initial commit\n(C1)"] --> C2["Add base styles\n(C2)"]
-       C2 --> C3["Urgent bugfix on main\n(C3)"]
-       C2 --> F1["Start developing feature Y\n(F1)"]
-       F1 --> F2["Complete feature Y\n(F2)"]
-
+    gitGraph
+       commit id: "C1"
+       commit id: "C2"
+       branch feature-y
+       checkout feature-y
+       commit id: "F1"
+       commit id: "F2"
+       checkout main
+       commit id: "C3"
     """
 
     mo.vstack(
@@ -125,21 +127,16 @@ def _(mo):
     # Section 3: Merging
     # Mermaid diagram for merge commit
     merge_diagram = """
-    flowchart LR
-       C1["Initial commit\n(C1)"] --> C2["Add base styles\n(C2)"]
-       C2 --> C3["Urgent bugfix on main\n(C3)"]
-       C2 --> F1["Start developing feature Y\n(F1)"]
-       F1 --> F2["Complete feature Y\n(F2)"]
-       C3 --> C4["Merge feature Y into main\n(C4)"]
-       F2 --> C4
-    """
-
-    # Mermaid diagram for fast-forward merge
-    ff_merge_diagram = """
-    flowchart LR
-       C1["Initial commit\n(C1)"] --> C2["Base setup\n(C2)"]
-       C2 --> H1["Fix critical bug\n(H1)"]
-       H1 --> C3["main (fast-forwarded)\n(C3)"]
+    gitGraph
+       commit id: "C1"
+       commit id: "C2"
+       branch feature-y
+       checkout feature-y
+       commit id: "F1"
+       commit id: "F2"
+       checkout main
+       commit id: "C3"
+       merge feature-y id: "C4"
     """
 
     mo.vstack(
@@ -161,15 +158,9 @@ def _(mo):
             ),
             mo.mermaid(merge_diagram),
             mo.md("*Commit C4 combines the changes from C3 and F2.*"),
-            mo.md("""
-        **Visualization (Fast-Forward Merge):**
-        If the branch you're merging *into* (e.g., `main`) hasn't had any new commits since the feature branch was created, Git performs a simpler "fast-forward" merge. It just moves the `main` pointer forward to point to the same commit as the feature branch.
-        """),
-            mo.mermaid(ff_merge_diagram),
-            mo.md("*Here, `main` simply moved forward to where `hotfix` was.*"),
         ]
     )
-    return ff_merge_diagram, merge_diagram
+    return (merge_diagram,)
 
 
 @app.cell
@@ -177,13 +168,14 @@ def _(mo):
     # Section 4: Rebasing
 
     # Mermaid diagram for rebasing
+    # Shows the *result* after rebasing feature-y onto main and fast-forward merging
     rebase_diagram = """
-    flowchart LR
-       C1["Initial commit\n(C1)"] --> C2["Add base styles\n(C2)"]
-       C2 --> C3["Urgent bugfix on main\n(C3)"]
-       C3 -.-> F1["Start feature Y (rebased)\n(F1)"]
-       F1 --> F2["Complete feature Y (rebased)\n(F2)"]
-       F2 -.-> C4["Merge feature Y (fast-forward)\n(C4)"]
+    gitGraph
+       commit id: "C1"
+       commit id: "C2"
+       commit id: "C3"
+       commit id: "F1'"
+       commit id: "F2'" tag: "main"
     """
 
     mo.vstack(
@@ -487,11 +479,6 @@ def _(mo):
         `git log` often to understand what's happening. Good luck!
         """
     )
-    return
-
-
-@app.cell
-def _():
     return
 
 
