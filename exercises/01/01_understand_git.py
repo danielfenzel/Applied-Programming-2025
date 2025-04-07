@@ -3,7 +3,7 @@
 import marimo
 
 __generated_with = "0.12.4"
-app = marimo.App(width="medium", app_title="Exercise 01 / Understanding Git")
+app = marimo.App(width="medium", app_title="Week 01 / Exercise 01")
 
 
 @app.cell
