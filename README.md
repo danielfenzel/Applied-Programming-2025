@@ -14,7 +14,7 @@ We'll be using `uv`, a fast Python package installer written in Rust, to manage 
 
 **Windows:**
 ```powershell
-curl -sSf https://astral.sh/uv/install.ps1 | powershell
+powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
 ```
 
 **macOS / Linux:**
