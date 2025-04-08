@@ -24,9 +24,22 @@ curl -sSf https://astral.sh/uv/install.sh | bash
 
 For more details, visit the [official uv documentation](https://github.com/astral-sh/uv).
 
+### Cloning the Repository
+To get started, clone the repository to your local machine. Open your terminal and run:
+
+```powershell
+git clone SOME_URL
+```
+
+Then navigate to the cloned directory:
+
+```powershell
+cd applied-programming
+```
+
 ### Setting Up Your Environment
 
-After installing uv, simply run:
+After installing uv and cloning the repository, simply run:
 
 ```powershell
 uv sync
