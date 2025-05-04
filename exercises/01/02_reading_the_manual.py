@@ -2,7 +2,7 @@
 
 import marimo
 
-__generated_with = "0.12.4"
+__generated_with = "0.13.4"
 app = marimo.App(width="medium", app_title="Week 01 / Exercise 02")
 
 
@@ -32,7 +32,7 @@ def _():
         """),
         ]
     )
-    return hashlib, mo, os
+    return hashlib, mo
 
 
 @app.cell
@@ -112,26 +112,33 @@ def _(hashlib, mo, upload):
             result,
         ]
     )
-    return file_hash, result
+    return (result,)
 
 
 @app.cell
 def _(mo, result):
     # Only show this section if the correct manual was uploaded
     # Create form elements for student answers
+    refresh = mo.ui.refresh(default_interval=1)
+
     questions = {
         "q1": mo.ui.text(
-            label="What is the maximum sampling frequency of the MuoviPro device?"
+            label="What is the maximum sampling frequency of the MuoviPro device in Hz?"
         ),
-        "q2": mo.ui.text(label="How many input channels does the MuoviPro support?"),
-        "q3": mo.ui.text(label="What is the input impedance of the device?"),
-        "q4": mo.ui.text(label="What is the battery life when fully charged?"),
+        "q2": mo.ui.text(label="How many input channels does one MuoviPro device have?"),
+        "q3": mo.ui.text(label="What other sensor does the MuoviPro device have besides EMG?"),
+        "q4": mo.ui.text(label="What is the battery life when transmitting data continuously in hours?"),
         "q5": mo.ui.text(
             label="What wireless communication protocol does the device use?"
         ),
+        "q6": mo.ui.text(label="What is the resolution of the device in bits?"),
+        "q7": mo.ui.text(label="What is the cut-off frequency of the low-pass filter in Hz?"),
+        "q8": mo.ui.text(label="What is the cut-off frequency of the high-pass filter in Hz?"),
+        "q9": mo.ui.text(label="Can you record and charge the device at the same time?"),
     }
 
     # Create a form layout using md.batch().form()
+
     form = (
         mo.md(
             f"""
@@ -140,10 +147,14 @@ def _(mo, result):
         3. {questions["q3"]}
         4. {questions["q4"]}
         5. {questions["q5"]}
+        6. {questions["q6"]}
+        7. {questions["q7"]}
+        8. {questions["q8"]}
+        9. {questions["q9"]}
         """
         )
         .batch(**questions)
-        .form()
+        .form(show_clear_button=True)
     )
 
     quiz_section = mo.vstack(
@@ -168,20 +179,26 @@ def _(mo, result):
 
         what_to_display = mo.vstack([manual_section, quiz_section])
 
-    what_to_display
-    return form, manual_section, questions, quiz_section, what_to_display
+    mo.vstack([refresh, what_to_display])
+    return form, questions, refresh
 
 
 @app.cell
-def _(form, mo, questions):
+def _(form, hashlib, mo, questions, refresh):
     # Only evaluate if the form has been submitted
     # Updated with the correct information from the MuoviPro manual
+
+
     answers = {
-        "q1": "1",  # Maximum sampling frequency
-        "q2": "2",  # Number of input channels
-        "q3": "3",  # Input impedance
-        "q4": "4",  # Battery life
-        "q5": "5",  # Wireless protocol
+        "q1": "08F90C1A417155361A5C4B8D297E0D78",  # Maximum sampling frequency
+        "q2": "6364D3F0F495B6AB9DCF8D3B5C6E0B01",  # Number of input channels
+        "q3": "ADCE094D314507AD8B234A286AEFF254",  # Other sensor
+        "q4": "C81E728D9D4C2F636F067F89CC14862C",  # Battery life
+        "q5": "B136EF5F6A01D816991FE3CF7A6AC763",  # Wireless protocol
+        "q6": "1FF1DE774005F8DA13F42943881C655F",  # Resolution
+        "q7": "CEE631121C2EC9232F3A2F028AD5C89B",  # Low-pass filter cut-off frequency
+        "q8": "D3D9446802A44259755D38E6D163E820",  # High-pass filter cut-off frequency
+        "q9": "C2F3F489A00553E7A01D369C103C7251",  # Record and charge
     }
 
     # Check each answer
@@ -189,15 +206,15 @@ def _(form, mo, questions):
     score = 0
 
     for q, answer_field in questions.items():
-        user_answer = answer_field.value.strip().lower()
-        correct_answer = answers[q].lower()
+        user_answer = hashlib.md5(answer_field.value.strip().upper().encode()).hexdigest().upper()
+        correct_answer = answers[q]
 
         if user_answer == correct_answer:
             results.append(f"✅ Question {q[-1]}: Correct!\n")
             score += 1
         else:
             results.append(
-                f"❌ Question {q[-1]}: Incorrect. The answer is: {answers[q]}\n"
+                f"❌ Question {q[-1]}: Incorrect.\n"
             )
 
     answers_to_display = mo.md(
@@ -213,24 +230,15 @@ def _(form, mo, questions):
             ]
         )
 
-    answers_to_display
-    return (
-        answer_field,
-        answers,
-        answers_to_display,
-        correct_answer,
-        q,
-        results,
-        score,
-        user_answer,
-    )
+    mo.vstack([refresh, answers_to_display])
+    return (score,)
 
 
 @app.cell
-def _(mo, score):
+def _(mo, questions, score):
     conclusion = mo.md("")
 
-    if score == 5:
+    if score == len(questions):
         conclusion = mo.md("""
         ## Congratulations!
 
@@ -249,7 +257,7 @@ def _(mo, score):
         """)
 
     conclusion
-    return (conclusion,)
+    return
 
 
 if __name__ == "__main__":
