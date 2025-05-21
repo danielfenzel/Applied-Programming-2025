@@ -169,17 +169,27 @@ def _(mo):
 def _(emg_signal):
     # Code cell for restructuring EMG data
     # Get the number of channels from the first dimension of the EMG signal
-    num_channels = emg_signal.shape[0]
-
-    # Restructure the 3D array to a 2D array
-    # The original data is in format: channels × windowsize × window
-    # We want to convert it to: channels × (windowsize × window)
-    # This combines all windows for each channel into one continuous signal
-
-    # First, transpose to get windows × samples × channels
-    # Then reshape to combine all windows for each channel
-    channel_data = emg_signal.transpose(2, 1, 0).reshape(-1, num_channels).T
-
+    
+    # Step 1: Get the dimensions of our data
+    num_channels = emg_signal.shape[0]    # Number of EMG channels
+    window_length = emg_signal.shape[1]     # Number of samples in each window
+    num_windows = emg_signal.shape[2]     # Number of time windows
+    
+    # Step 2: Transpose the array to change dimension order
+    # Original shape: (channels, windowsize, window)
+    # After transpose: (window, windowsize, channels)
+    transposed_data = emg_signal.transpose(2, 1, 0)
+    
+    # Step 3: Reshape to combine all windows
+    # This combines all windows and samples into one long sequence
+    # -1 means "calculate this dimension automatically"
+    # Result shape: (window * windowsize, channels)
+    reshaped_data = transposed_data.reshape(-1, num_channels)
+    
+    # Step 4: Transpose back to get channels as first dimension
+    # Final shape: (channels, window * windowsize)
+    channel_data = reshaped_data.T
+    
     # Display information about the restructured data
     print("\nRestructured EMG Data:")
     print("-" * 50)
