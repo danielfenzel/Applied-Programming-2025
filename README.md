@@ -1,8 +1,8 @@
-# Applied Programming 2025
+# Applied Programming 2026
 
 Welcome, Students! 👋
 
-This repository contains exercises and materials for the Applied Programming course in 2025. We're excited to have you on the first version of this course!
+This repository contains exercises and materials for the Applied Programming course in 2026. We're excited to have you on the first version of this course!
 
 ## Getting Started
 
