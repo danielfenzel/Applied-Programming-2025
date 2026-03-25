@@ -82,7 +82,6 @@ def _(hashlib, mo, upload):
         result = mo.md("❓ Please upload the MuoviPro manual PDF")
     else:
         file_hash = hashlib.md5(upload.value[0].contents).hexdigest().upper()
-
         if file_hash == "1D0C2C73B800180EC2308409991FD425":
             result = mo.md("""✅ **Success!** 
 

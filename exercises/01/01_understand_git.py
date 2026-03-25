@@ -1,5 +1,13 @@
 # Copyright 2025 n-squared LAB @ FAU Erlangen-Nürnberg
 
+# Copyright 2025 n-squared LAB @ FAU Erlangen-Nürnberg
+
+import sys
+import asyncio
+
+if sys.platform == "win32":
+    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+
 import marimo
 
 __generated_with = "0.12.4"
