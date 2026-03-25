@@ -83,7 +83,7 @@ def _(hashlib, mo, upload):
     else:
         file_hash = hashlib.md5(upload.value[0].contents).hexdigest().upper()
 
-        if file_hash == "20DC4246841E20DE6E474F42DD8DB3A9":
+        if file_hash == "1D0C2C73B800180EC2308409991FD425":
             result = mo.md("""✅ **Success!** 
 
                            You've found the correct manual!
