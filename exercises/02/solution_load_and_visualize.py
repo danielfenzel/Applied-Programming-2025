@@ -93,16 +93,23 @@ def bandpass_filter_emg(
     return filtered_channels
 
 
+import numpy as np
+
 def compute_rms(filtered_channels: np.ndarray, sampling_rate: float, window_ms: float = 100):
     window_size = int((window_ms / 1000) * sampling_rate)
     rms_signals = np.zeros_like(filtered_channels)
 
-    kernel = np.ones(window_size) / window_size
+    half_window = window_size // 2
 
     for channel in range(filtered_channels.shape[0]):
-        squared = filtered_channels[channel, :] ** 2
-        mean_squared = np.convolve(squared, kernel, mode="same")
-        rms_signals[channel, :] = np.sqrt(mean_squared)
+        signal = filtered_channels[channel, :]
+
+        for i in range(signal.shape[0]):
+            start = max(0, i - half_window)
+            end = min(signal.shape[0], i + half_window)
+
+            window = signal[start:end]
+            rms_signals[channel, i] = np.sqrt(np.mean(window ** 2))
 
     print("\nRMS Signal Information:")
     print("-" * 50)
@@ -142,7 +149,7 @@ def plot_emg_processing(
 
 
 def main():
-    filename = "D:/PhD/Teaching/Applied-Programming-2026/recording.pkl"
+    filename = "D:/PhD/Teaching/Applied-Programming-2026/Applied-Programming-2026/recording.pkl"
 
     emg_signal, sampling_rate = load_emg_data(filename)
     channel_data, _ = restructure_emg_data(emg_signal)

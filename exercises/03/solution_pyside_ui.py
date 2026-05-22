@@ -164,7 +164,7 @@ class EMGViewer(QMainWindow):
 # ======================
 
 def main():
-    filename = "D:/PhD/Teaching/Applied-Programming-2026/recording.pkl"
+    filename = "D:/PhD/Teaching/Applied-Programming-2026/Applied-Programming-2026/recording.pkl"
 
     emg_signal, sampling_rate = load_emg_data(filename)
     channel_data = restructure_emg_data(emg_signal)

@@ -8,7 +8,8 @@ In this exercise, you will build a small desktop application for **real-time sig
 - **VisPy** for fast real-time plotting
 - **MVVM** (Model-View-ViewModel) for code structure
 
-This exercise is an important bridge between the earlier PySide6 UI exercise and the final project.  
+This exercise is an important bridge between the earlier PySide6 UI exercise and the final project.
+
 Here, the signal is still simulated locally. Later, in the final project, the same structure can be reused with TCP data instead of generated data.
 
 ---
@@ -18,12 +19,13 @@ Here, the signal is still simulated locally. Later, in the final project, the sa
 In earlier exercises, you worked with:
 
 - loading and processing signals
-- plotting with Matplotlib
+- plotting offline data with Matplotlib
 - building a basic UI with PySide6
 
 Now you combine these ideas into a **small real-time application**.
 
-That means you are no longer just writing a script that runs once and stops.  
+That means you are no longer just writing a script that runs once and stops.
+
 Instead, you are building an application that:
 
 - stays open
@@ -42,9 +44,10 @@ By the end of this exercise, you should understand:
 - why **VisPy** is better suited than Matplotlib for live plotting
 - how a **sliding window** visualization works
 - how to structure code using **MVVM**
-- how data flows from a model to a view through a viewmodel
+- how data flows from a Model to a View through a ViewModel
 - how a Qt timer drives repeated updates
 - how **signals and slots** enable communication without tightly coupling components
+- how this structure can later be extended to TCP-based live data
 
 ---
 
@@ -63,7 +66,8 @@ But live plotting is a different use case.
 
 If you update a Matplotlib figure many times per second, it quickly becomes less efficient because the figure is repeatedly redrawn in a relatively heavy plotting system.
 
-**VisPy** is designed for high-performance visualization and uses GPU acceleration.  
+**VisPy** is designed for high-performance visualization and uses GPU acceleration.
+
 That makes it much more suitable for:
 
 - real-time signal displays
@@ -85,7 +89,8 @@ For this task — real-time plotting — the answer is **VisPy**.
 
 # Part 2 — What does “real-time plotting” mean here?
 
-The signal in this exercise is not actually coming from hardware yet.  
+The signal in this exercise is not actually coming from hardware yet.
+
 It is generated in software.
 
 But the app behaves **as if** data were arriving over time.
@@ -105,9 +110,12 @@ Instead of displaying the whole signal at once, we display only a **window**:
 
 Example:
 
-- first frame: samples `0 : 5000`
-- next frame: samples `20 : 5020`
-- next frame: samples `40 : 5040`
+```text
+first frame:  samples 0    : 5000
+next frame:   samples 20   : 5020
+next frame:   samples 40   : 5040
+next frame:   samples 60   : 5060
+```
 
 This creates the impression of a moving, continuously updating signal.
 
@@ -167,7 +175,10 @@ MVVM stands for:
 
 It is a way to separate responsibilities.
 
-### Model
+---
+
+## Model
+
 The Model owns the **data**.
 
 It answers questions like:
@@ -177,14 +188,23 @@ It answers questions like:
 - What data window should be returned?
 
 It should **not** care about:
+
 - buttons
 - labels
 - window layout
 - plotting widgets
+- timer state
+
+The Model should not know that a graphical user interface exists.
+
+Its role is only:
+
+> “Here is the data you asked for.”
 
 ---
 
-### View
+## View
+
 The View owns the **user interface**.
 
 It answers questions like:
@@ -192,15 +212,27 @@ It answers questions like:
 - What widgets exist?
 - What does the user see?
 - What happens when a button is clicked?
+- How should the plot be displayed?
 
 It should **not** implement:
+
 - data generation
 - signal processing logic
 - timer/state logic
+- sliding-window logic
+
+The View is allowed to update presentation details, for example:
+
+- button text
+- label text
+- plot visuals
+
+But it should not decide which signal window comes next. That belongs to the ViewModel.
 
 ---
 
-### ViewModel
+## ViewModel
+
 The ViewModel sits between Model and View.
 
 It answers questions like:
@@ -211,6 +243,7 @@ It answers questions like:
 - What data should be sent to the View?
 
 The ViewModel connects:
+
 - **Model → data**
 - **View → interaction**
 
@@ -223,13 +256,50 @@ So the ViewModel is the layer where application logic lives.
 Think of it like this:
 
 ### Model
+
 > “I own the signal.”
 
 ### ViewModel
+
 > “I decide what part of the signal is shown, and when.”
 
 ### View
+
 > “I display what I receive and forward button clicks.”
+
+---
+
+## MVVM in this exercise
+
+| MVVM part | File | Responsibility |
+|---|---|---|
+| Model | `models/signal_model.py` | Creates/stores the signal and returns data windows |
+| ViewModel | `viewmodels/mainViewModel.py` | Owns timer, current index, plotting state, and emits new data |
+| View | `views/mainView.py` | Builds the main UI, handles button clicks, connects signals |
+| View | `views/plotView.py` | Displays the signal using VisPy |
+| App entry point | `main.py` | Creates the application, ViewModel, and View |
+
+---
+
+## Important MVVM rule for this exercise
+
+Use this rule when deciding where code belongs:
+
+- If it creates or stores signal data → **Model**
+- If it decides what should happen next → **ViewModel**
+- If it displays something or reacts to a button click → **View**
+
+Examples:
+
+| Task | Correct place |
+|---|---|
+| Generate the simulated signal | Model |
+| Return samples `current_index : current_index + window_size` | Model |
+| Remember whether plotting is active | ViewModel |
+| Start and stop the timer | ViewModel |
+| Emit new plot data | ViewModel |
+| Change button text | View |
+| Draw the line with VisPy | View |
 
 ---
 
@@ -255,11 +325,65 @@ Instead, it should work through the ViewModel.
 
 ---
 
+## Data flow with actual method names
+
+In this exercise, the flow looks like this:
+
+```text
+toggle_button.clicked
+        ↓
+MainView.toggle_plotting()
+        ↓
+MainViewModel.start_plotting()
+        ↓
+QTimer.timeout
+        ↓
+MainViewModel.update_plot()
+        ↓
+SignalModel.get_window(current_index)
+        ↓
+MainViewModel.plot_updated.emit(x, y)
+        ↓
+VisPyPlotWidget.update_plot(x, y)
+```
+
+This is the central communication path of the application.
+
+---
+
+## Wrong vs. better MVVM example
+
+### Wrong: View directly asks the Model for data
+
+```python
+x, y = self.model.get_window(0)
+self.plot_widget.update_plot(x, y)
+```
+
+This couples the user interface directly to the data source.
+
+If the data source later changes from a simulated signal to TCP data, the View may also need to change.
+
+---
+
+### Better: View talks to the ViewModel
+
+```python
+self.view_model.start_plotting()
+```
+
+The ViewModel decides when to request data from the Model and emits the result to the View.
+
+The View does not need to know where the data comes from.
+
+---
+
 ## Why this helps in the final project
 
 Later, your Model may no longer generate a fake signal.
 
 Instead, it may:
+
 - store TCP data
 - buffer incoming packets
 - provide multi-channel chunks
@@ -267,6 +391,7 @@ Instead, it may:
 If your architecture is clean, you can swap the Model without rewriting everything else.
 
 That is one of the major benefits of MVVM:
+
 - **better scalability**
 - **easier replacement of components**
 - **cleaner extension paths**
@@ -281,11 +406,14 @@ Your files are organized like this:
 exercise_04/
 ├── main.py
 ├── models/
+│   ├── __init__.py
 │   └── signal_model.py
 ├── views/
+│   ├── __init__.py
 │   ├── mainView.py
 │   └── plotView.py
 ├── viewmodels/
+│   ├── __init__.py
 │   └── mainViewModel.py
 └── README.md
 ```
@@ -294,13 +422,15 @@ exercise_04/
 
 ## Why split into folders?
 
-This helps students see immediately:
+This helps you see immediately:
 
 - where UI code belongs
 - where logic belongs
 - where data code belongs
 
 It also mirrors the final project structure more closely.
+
+The `__init__.py` files are needed so Python treats the folders as importable packages.
 
 ---
 
@@ -381,6 +511,7 @@ The View needs a ready-to-use ViewModel object so it can:
 - check state
 
 This is a small but important architectural lesson:
+
 - dependencies should be explicit
 - objects should receive what they need
 
@@ -393,6 +524,7 @@ This is a small but important architectural lesson:
 This is the **Model**.
 
 Its job is to:
+
 - create or store the signal
 - know the sampling rate
 - return windows of data
@@ -403,11 +535,13 @@ Its job is to:
 Because it owns the underlying data and does not care about the UI.
 
 It should not know:
+
 - whether there is a button
 - whether plotting is active
 - whether the user pressed Start
 
 Its role is only:
+
 > “Here is the data you asked for.”
 
 ---
@@ -435,7 +569,7 @@ Why is that useful?
 Because if the requested start index is too close to the end, then:
 
 - a full window would no longer fit
-- shapes could become inconsistent
+- array shapes could become inconsistent
 - the animation logic becomes messy
 
 So the ViewModel uses this method to decide whether it should reset to the beginning.
@@ -467,7 +601,9 @@ The ViewModel inherits from `QObject` because it needs Qt features such as:
 - timer integration
 - event-based behavior
 
-So the ViewModel is not just a plain Python class — it participates in the Qt signal-slot system.
+So the ViewModel is not just a plain Python class.
+
+It participates in the Qt signal-slot system.
 
 ---
 
@@ -484,6 +620,7 @@ means:
 > “This ViewModel can emit two Python objects.”
 
 In this exercise, those two objects are:
+
 - `x`
 - `y`
 
@@ -498,7 +635,7 @@ Because in MVVM:
 - the ViewModel should not control drawing details
 - the View should stay responsible for presentation
 
-So instead of doing this:
+So instead of doing this inside the ViewModel:
 
 ```python
 self.plot_widget.set_data(...)
@@ -539,22 +676,39 @@ Because a normal loop would block the GUI and freeze the window.
 ### TODO guidance in `mainViewModel.py`
 
 #### Creating the Model
+
 The ViewModel should create the Model object once during initialization.
 
 Why?
+
 Because the ViewModel needs a source of data for all later updates.
+
+Expected idea:
+
+```python
+self.model = SignalModel(
+    sampling_rate=1000,
+    duration=100,
+    window_size=5000,
+    step_size=20,
+)
+```
 
 ---
 
 #### Storing state
+
 The ViewModel needs state variables such as:
 
-- `current_index`
-- `is_plotting`
+```python
+self.current_index = 0
+self.is_plotting = False
+```
 
 Why?
 
 Because someone needs to remember:
+
 - where the current window starts
 - whether the timer should be running
 
@@ -563,7 +717,15 @@ That “someone” is the ViewModel.
 ---
 
 #### Creating the timer
+
 The ViewModel should create a `QTimer` and connect its timeout signal to `update_plot`.
+
+Expected idea:
+
+```python
+self.timer = QTimer(self)
+self.timer.timeout.connect(self.update_plot)
+```
 
 This means:
 
@@ -574,6 +736,7 @@ That is the core mechanism for the animation.
 ---
 
 #### Starting plotting
+
 When plotting starts, the ViewModel should:
 
 - check whether plotting is already running
@@ -584,14 +747,31 @@ This is an example of a **guard condition**.
 
 A guard condition prevents invalid transitions, such as starting the timer twice.
 
+Expected idea:
+
+```python
+if not self.is_plotting:
+    self.is_plotting = True
+    self.timer.start(10)
+```
+
 ---
 
 #### Stopping plotting
+
 Similarly, when stopping:
 
 - check whether plotting is currently running
 - update state
 - stop the timer
+
+Expected idea:
+
+```python
+if self.is_plotting:
+    self.is_plotting = False
+    self.timer.stop()
+```
 
 Again, guard conditions keep the state consistent.
 
@@ -602,11 +782,14 @@ Again, guard conditions keep the state consistent.
 That method contains the core sliding-window logic, and it becomes harder quickly if too many parts are removed at once.
 
 So in this exercise, the focus is on:
+
 - timer setup
 - state ownership
 - signal emission logic
 
-without making students debug too much infrastructure at the same time.
+without making you debug too much infrastructure at the same time.
+
+Before `update_plot()` can work, `self.model` must contain a `SignalModel` object and `self.current_index` must be an integer.
 
 ---
 
@@ -615,6 +798,7 @@ without making students debug too much infrastructure at the same time.
 This file is the VisPy-specific visualization component.
 
 It is a **View**, but a specialized one:
+
 - it does not manage the whole window
 - it only manages the plot area
 
@@ -634,6 +818,7 @@ It is a **View**, but a specialized one:
 The `SceneCanvas` is the VisPy drawing surface.
 
 It plays a role similar to:
+
 - a canvas
 - a rendering area
 - a visualization surface
@@ -647,11 +832,13 @@ But unlike a Matplotlib figure, it is optimized for faster updates.
 VisPy uses its own scene/widget system.
 
 The grid is used to organize:
+
 - y-axis
 - plot view
 - x-axis
 
-This is not the same as a Qt layout.  
+This is not the same as a Qt layout.
+
 It is part of VisPy’s own internal scene organization.
 
 ---
@@ -663,7 +850,7 @@ This distinction is important.
 - A Qt `QWidget` is a GUI container
 - A VisPy `View` is the actual plotting scene
 
-So when students see:
+So when you see:
 
 ```python
 self.view = ...
@@ -693,7 +880,7 @@ Axis widgets and the plotting view must belong to the same VisPy grid structure 
 
 If not, VisPy cannot determine the transformations correctly and runtime errors appear.
 
-That is why this README should help students understand the idea, even if it does not show the exact code.
+That is why this README explains the idea, even if the TODOs do not require you to build the full scene setup from scratch.
 
 ---
 
@@ -705,7 +892,7 @@ It is created once, then updated many times.
 
 This is a very important real-time plotting idea:
 
-> Do not recreate the whole plot every frame.  
+> Do not recreate the whole plot every frame.
 > Create the visual once and update its data.
 
 That is much more efficient.
@@ -719,9 +906,11 @@ This method receives new plotting data.
 The important ideas inside are:
 
 #### Convert to arrays
+
 This makes sure the data has a clean numeric format.
 
 #### Combine x and y into positions
+
 VisPy expects point data in the form:
 
 ```text
@@ -734,13 +923,37 @@ meaning:
 - column 1 = x
 - column 2 = y
 
-This is why combining x and y correctly matters.
+For example:
+
+```text
+x = [0.00, 0.01, 0.02]
+y = [0.10, 0.15, 0.09]
+```
+
+should become:
+
+```text
+pos = [
+    [0.00, 0.10],
+    [0.01, 0.15],
+    [0.02, 0.09],
+]
+```
+
+In NumPy, this can be done with:
+
+```python
+pos = np.column_stack((x, y))
+```
 
 #### Update the line
+
 The line visual should receive the new position array.
 
 #### Update the camera range
+
 If the visible range is not updated, the data might be:
+
 - clipped
 - too small
 - outside the visible area
@@ -752,11 +965,12 @@ Padding is useful so the line is not drawn directly at the border.
 ### Why the TODOs are in `update_plot()`
 
 This is the most concrete part of the VisPy exercise:
+
 - data shape
 - plot update
 - visible region
 
-These are the ideas students really need to touch themselves.
+These are the ideas you really need to touch yourself.
 
 ---
 
@@ -765,11 +979,12 @@ These are the ideas students really need to touch themselves.
 This is the main application window.
 
 It is the place where:
+
 - widgets are arranged
 - user interaction is handled
 - ViewModel signals are connected to visible behavior
 
-Since the students already practiced PySide6 UI basics earlier, the focus here is not on layout construction itself, but on **MVVM communication**.
+Since you already practiced PySide6 UI basics earlier, the focus here is not on layout construction itself, but on **MVVM communication**.
 
 ---
 
@@ -786,6 +1001,7 @@ Since the students already practiced PySide6 UI basics earlier, the focus here i
 ### Storing the ViewModel
 
 The View needs the ViewModel because it must:
+
 - ask it to start/stop plotting
 - check current plotting state
 - connect its signals
@@ -793,10 +1009,17 @@ The View needs the ViewModel because it must:
 That is why the View receives the ViewModel in `__init__`.
 
 This is dependency injection in a very simple form:
+
 - the View does not create the ViewModel itself
 - it receives it from outside
 
 That makes the structure cleaner.
+
+Expected idea:
+
+```python
+self.view_model = view_model
+```
 
 ---
 
@@ -810,14 +1033,28 @@ That is a central MVVM idea:
 
 > user actions are forwarded to the ViewModel
 
+Expected idea:
+
+```python
+self.toggle_button.clicked.connect(self.toggle_plotting)
+```
+
 ---
 
 ### Connecting `plot_updated`
 
-The ViewModel emits plot data.  
+The ViewModel emits plot data.
+
 The View should connect that signal to the plotting widget.
 
+Expected idea:
+
+```python
+self.view_model.plot_updated.connect(self.plot_widget.update_plot)
+```
+
 This means the View acts as the layer that wires together:
+
 - data updates from logic
 - visual updates in the UI
 
@@ -835,9 +1072,11 @@ It should:
 - update the label text
 
 This is a good example of what the View *is* allowed to do:
+
 - reflect state in the UI
 
 But it should not:
+
 - generate data
 - manage the timer directly
 - compute windows
@@ -853,9 +1092,11 @@ This is one of the core Qt concepts.
 ## What is a signal?
 
 A signal is:
+
 > “Something happened.”
 
 Examples:
+
 - button clicked
 - timer timeout
 - custom plot data available
@@ -865,6 +1106,7 @@ Examples:
 ## What is a slot?
 
 A slot is:
+
 > “A function that reacts to that event.”
 
 ---
@@ -928,6 +1170,7 @@ So the plot widget receives the new data.
 ## Why signals and slots are useful
 
 Without them, you would often end up with:
+
 - direct dependencies everywhere
 - hard-coded object references
 - messy control flow
@@ -953,6 +1196,7 @@ Use `QTimer` instead.
 That is inefficient.
 
 Better:
+
 - create the line visual once
 - only update its data
 
@@ -986,23 +1230,63 @@ Always route UI actions through the ViewModel.
 
 ---
 
-# Part 8 — How this connects to the final project
+## 6. Putting timer logic into the View
+
+The View may contain buttons and labels, but it should not own the timer.
+
+The timer controls application behavior, so it belongs in the ViewModel.
+
+---
+
+## 7. Forgetting to connect signals
+
+If the app opens but nothing updates, check the signal connections:
+
+- button click connected?
+- timer timeout connected?
+- ViewModel signal connected to plot widget?
+
+---
+
+# Part 8 — Mini checkpoint before running
+
+Before running the app, check:
+
+- Does `main.py` create the ViewModel before the View?
+- Does the View receive the ViewModel as an argument?
+- Does the View store the ViewModel in `self.view_model`?
+- Does the View connect the button to `toggle_plotting()`?
+- Does the View connect `plot_updated` to `update_plot()`?
+- Does the ViewModel create a `SignalModel`?
+- Does the ViewModel initialize `current_index` with `0`?
+- Does the ViewModel initialize `is_plotting` with `False`?
+- Does the ViewModel create and connect the `QTimer`?
+- Does the plot widget convert `x` and `y` into an `(N, 2)` array?
+
+---
+
+# Part 9 — How this connects to the final project
 
 This exercise already gives you several building blocks that will appear again later.
 
 | This exercise | Final project |
 |---|---|
 | simulated signal model | TCP-backed signal model |
-| QTimer-based updates | live network-driven updates |
+| single signal | possibly multi-channel signal data |
+| QTimer-based updates | live network-driven updates or buffered updates |
 | VisPy line plot | multi-channel live visualization |
 | MVVM structure | required architecture |
 | ViewModel signal emission | data propagation from backend to UI |
 
 So although this exercise uses simulated data, the architecture is already very relevant to the final project.
 
+The most important idea is:
+
+> If the architecture is clean now, replacing the simulated signal with real TCP data later becomes much easier.
+
 ---
 
-# Part 9 — How to run
+# Part 10 — How to run
 
 Install dependencies:
 

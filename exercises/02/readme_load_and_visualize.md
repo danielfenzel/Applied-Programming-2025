@@ -235,47 +235,52 @@ Advantages:
 
 ## Why RMS?
 
-EMG is oscillatory:
+EMG signals oscillate around zero:
 
-+ - + - + -
+```
++ - + - + - +
+```
 
-Mean ≈ 0 → useless
-
-👉 RMS gives signal **power / amplitude**
+👉 The average (mean) is close to zero → not useful  
+👉 RMS reflects the **signal amplitude / power over time**
 
 ---
 
 ## RMS Formula
 
+```
 RMS = sqrt(mean(signal²))
+```
 
 ---
 
 ## Intuition
 
-- square → remove sign
-- average → smooth
-- sqrt → restore scale
+- **Square** → removes negative values  
+- **Mean** → averages signal energy  
+- **Square root** → brings values back to original scale  
+
+👉 Result: a smooth representation of signal amplitude
 
 ---
 
 ## Why use a window?
 
-We want a **time-varying amplitude**
+We don’t want a single RMS value.
 
-Not a single value.
+👉 We want to see how amplitude changes over time
+
+So we compute RMS **locally** around each time point.
 
 ---
 
 ## Moving Window Concept
 
-Instead of:
+For each sample `i`:
 
-RMS of entire signal
-
-We compute:
-
-RMS over short segments (e.g. 100 ms)
+1. Take a small segment around `i` (e.g. 100 ms)  
+2. Compute RMS inside this window  
+3. Assign the result to position `i`  
 
 ---
 
@@ -283,31 +288,39 @@ RMS over short segments (e.g. 100 ms)
 
 Example:
 
+```
 sampling_rate = 1000 Hz  
 window = 100 ms = 0.1 s  
 
-→ 100 samples
-
----
-
-## Example Code Pattern
-
-```python
-window_size = int(0.1 * sampling_rate)
-kernel = np.ones(window_size) / window_size
-
-squared = signal ** 2
-mean = np.convolve(squared, kernel, mode="same")
-rms = np.sqrt(mean)
+→ window_size = 100 samples
 ```
 
 ---
 
-## Why convolution?
+## Implementation (step-by-step)
 
-It computes a **moving average efficiently**.
+Instead of convolution, we explicitly define a window:
+
+```python
+for each channel:
+    for each sample i:
+        start = max(0, i - half_window)
+        end   = min(signal_length, i + half_window)
+
+        window = signal[start:end]
+        rms[i] = sqrt(mean(window²))
+```
 
 ---
+
+## Key idea
+
+👉 We slide a window across the signal and compute RMS **locally**
+
+This gives a **time-resolved amplitude envelope**.
+
+---
+
 
 # Step 5 — Visualization
 

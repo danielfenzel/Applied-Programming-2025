@@ -5,10 +5,13 @@ description = "The exercises for the Applied Programming class of 2025"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
-    "marimo>=0.12.4",
-    "pyqt5>=5.15.11",
-    "pyqt5-qt5==5.15.2",
-    "vispy>=0.15.2",
+    "numpy>=1.26,<3",
+    "scipy>=1.12,<2",
+    "PySide6>=6.7,<7",
+    "vispy>=0.14,<1",
+    "matplotlib>=3.8,<4",
+    "pandas>=2.2,<3",
+    "marimo>=0.9,<1",
 ]
 
 [dependency-groups]

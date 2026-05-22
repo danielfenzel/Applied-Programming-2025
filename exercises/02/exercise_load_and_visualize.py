@@ -182,6 +182,7 @@ def plot_emg_processing(
 
 
 def main():
+    # TODO: get the filepath of the pkl file (Use / not \)
     filename = "recording.pkl"
 
     emg_signal, sampling_rate = load_emg_data(filename)
